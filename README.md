@@ -1,54 +1,28 @@
 # Lean Bisection Method
 
-A practical implementation of the bisection root-finding algorithm in Lean 4 using Float arithmetic.
+A practical implementation of the bisection root-finding algorithm in Lean 4 using Float arithmetic and Algebra on Real-valued Functions.
 
 ## Overview
 
 The bisection method is a robust numerical algorithm for finding roots of continuous functions. This implementation provides:
 
 - **Float-based computation** for practical numerical results
-- **Configurable parameters** (tolerance, max iterations)
+- **Configurable parameters** (tolerance, max iterations (optional))
 - **Comprehensive error handling** with detailed result types
-- **Built-in test functions** for common mathematical equations
+- **Built-in test functions** for common mathematical equations and more complex trigonometric functions and algebraic equations
 
 ## Implementation: bisection.lean
 
-The complete implementation is contained in a single file: `src/bisection.lean`
+The complete implementation using float arithmetic: `src/bisection.lean`
 
 ### Core Components
 
 The implementation includes:
 - `BisectionResult` - Result type with success/error cases
 - `BisectionConfig` - Configuration for tolerance and iteration limits  
-- `bisection` - Main algorithm implementation
+- `bisection` - Main loop
 - `findRoot` - Convenient wrapper function
-- Built-in test functions and examples
-
-### Data Types
-
-```lean4
-inductive BisectionResult where
-  | success (root : Float) (iterations : Nat)
-  | invalidBounds (reason : String)  
-  | maxIterationsReached (bestApprox : Float) (iterations : Nat)
-
-structure BisectionConfig where
-  tolerance : Float := 1e-10
-  maxIterations : Nat := 1000
-```
-
-### Algorithm Implementation
-
-- **`bisection`**: Main algorithm with bounds checking and iterative refinement
-- **`findRoot`**: Wrapper function using default configuration
-- **`oppositeSigns`**: Utility for checking sign changes (root detection)
-
-### Built-in Examples
-
-The file includes three test functions:
-- `testFunction1`: x² - 2 = 0 (finds √2)
-- `testFunction2`: x³ - x - 1 = 0 (cubic equation)  
-- `testFunction3`: sin(x) = 0 (finds π)
+- Built-in test functions, examples and so on
 
 ## Usage
 
@@ -99,34 +73,20 @@ The bisection method finds roots by:
 
 1. **Validate bounds**: Check that `a < b` and `f(a)` and `f(b)` have opposite signs
 2. **Iterate**: Repeatedly bisect the interval `[a,b]` at the midpoint
-3. **Converge**: Stop when the interval is smaller than tolerance or function value is near zero
-4. **Handle errors**: Return appropriate error messages for invalid inputs
-
-### Algorithm Properties
-
-- **Guaranteed convergence**: Always finds a root if one exists in the interval
-- **Predictable iterations**: At most `⌈log₂((b-a)/tolerance)⌉` steps
-- **Robust**: Works for any continuous function, no derivatives needed
-- **Simple**: Easy to understand and implement correctly
+3. **Converge**: Stop when the interval is smaller than tolerance or function value is near and/or equal zero
 
 ## Goals
 
-This implementation demonstrates:
-- Clean, readable Lean 4 code for numerical algorithms
-- Practical Float-based computation 
-- Proper error handling and result types
-- Self-contained example with built-in tests
+This implementation aims at performing practical and complex numerical computations in Lean and ensure results formally verified without a "human-in-the-loop" 
 
 ## Future Work
 
-Potential extensions:
-- **Formal proofs**: Add mathematical verification of correctness
-- **Generic types**: Extend beyond Float to other numeric types
-- **Performance**: Optimize for larger-scale computations
-- **Integration**: Connect with Mathlib's analysis library
+- **Generic types**: Currently extending the code beyond Floats to handle other numeric types
+- **Formal proofs**: Add mathematical verification using proofs for code correctness
+- **Performance**: Optimize for faster execution
 
 ## Requirements
 
 - **Lean 4**: Any recent version (tested with v4.25.0-rc2)
 - **Lake**: For package management
-- **No external dependencies**: Pure Lean implementation
+
