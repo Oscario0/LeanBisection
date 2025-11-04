@@ -11,7 +11,7 @@ The bisection method is a robust numerical algorithm for finding roots of contin
 - **Comprehensive error handling** with detailed result types
 - **Built-in test functions** for common mathematical equations and more complex trigonometric functions and algebraic equations
 
-## Implementation: bisection.lean
+## Implementation
 
 The complete implementation using float arithmetic: `src/bisection.lean`
 
