@@ -8,5 +8,6 @@ require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git"
 
 @[default_target]
-lean_lib «bisection» where
+lean_lib «Bisection» where
   srcDir := "src"
+  roots := #[`bi_test, `bi_test_proofs, `bisection]

@@ -1,3 +1,4 @@
+/.lake
 .lake/build/ir/bisection.c
 .lake/build/ir/bisection.c.hash
 .lake/build/lib/lean/bisection.ilean
@@ -20,3 +21,13 @@
 .lake/packages/proofwidgets/
 .lake/packages/Qq/
 .lake/build/ir/bisection.setup.json
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.coverage
+*.log
+requirements.txt
+key.py

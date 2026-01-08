@@ -1,53 +1,84 @@
--- result format
-inductive BisectionResult where
-  | success (root : Float) (iterations : Nat)
-  | invalidBounds (reason : String)
-  | maxIterationsReached (bestApprox : Float) (iterations : Nat)
+import Mathlib
 
--- iterations and max tolerance
-structure BisectionConfig where
-  tolerance : Float := 1e-10
-  maxIterations : Nat := 1000
+structure Molecule where
+  name     : Option String
+  formula  : String
+  typeOfAtoms : List (Chemprop)
+  numOfAtoms : List (Float)
 
-def oppositeSigns (x y : Float) : Bool :=
-  (x > 0.0 && y < 0.0) || (x < 0.0 && y > 0.0)
+class BisectionConfig (α : Type*) where
+  add : α → α → α
+  sub : α → α → α
+  div : α → α → α
+  mul : α → α → α
+  lt : α → α → Bool
+  le : α → α → Bool
+  zero : α
+  two : α
+  ---- : α
+  isPositive : α → Bool
+  isNegative : α → Bool
+  -- valid : left - right
 
-def bisection (f : Float → Float) (a b : Float) (config : BisectionConfig := {}) : BisectionResult :=
-  if a >= b then
-    BisectionResult.invalidBounds "left bound must be less than right bound"
-  else if ¬(oppositeSigns (f a) (f b)) then
-    BisectionResult.invalidBounds "function must have opposite signs at bounds"
+instance [BisectionConfig α] : Add α where add := BisectionConfig.add
+instance [BisectionConfig α] : Sub α where sub := BisectionConfig.sub
+instance [BisectionConfig α] : Div α where div := BisectionConfig.div
+instance  [BisectionConfig α] : Mul α where mul := BisectionConfig.mul
+
+instance : BisectionConfig Float where
+  add := (· + ·)
+  sub := (· - ·)
+  div := (· / ·)
+  mul := (· * ·)
+  lt := (· < ·)
+  le := (· ≤ ·)
+  zero := 0.0
+  two := 2.0
+  -- := 4.0
+  isPositive x := x > 0.0
+  isNegative x := x < 0.0
+
+instance : BisectionConfig ℚ where
+  add := (· + ·)
+  sub := (· - ·)
+  div := (· / ·)
+  mul := (· * ·)
+  lt := (· < ·)
+  le := (· ≤ · )
+  zero := 0
+  two := 2
+  isPositive x := x > 0.0
+  isNegative x := x < 0.0
+noncomputable instance : BisectionConfig ℝ where
+  add := (· + ·)
+  sub := (· - ·)
+  div := (· / ·)
+  mul := (· * ·)
+  lt x y := decide (x < y)
+  le x y := decide (x ≤ y)
+  zero := 0
+  two := 2
+  -- := 4
+  isPositive x := decide (x > 0)
+  isNegative x := decide (x < 0)
+
+def bisectionCore {α : Type*} [BisectionConfig α ]
+    (f : α → α) (a b tolerance : α) (maxIter : ℕ ) : Option α :=
+  if BisectionConfig.le b a then none  -- a >= b
   else
-    let rec loop (left right : Float) (iter : Nat) : BisectionResult :=
-      if iter >= config.maxIterations then
-        BisectionResult.maxIterationsReached ((left + right) / 2.0) iter
+    let rec loop (left right : α) (iter : ℕ) : Option α :=
+      if iter >= maxIter then
+        some ((left + right) / BisectionConfig.two)
+      else if BisectionConfig.lt (right - left) tolerance then
+        some ((left + right) / BisectionConfig.two)
       else
-        let mid := (left + right) / 2.0
+        let mid := (left + right) / BisectionConfig.two
+        let fleft := f left
         let fmid := f mid
-        if fmid.abs < config.tolerance || right - left < config.tolerance then
-          BisectionResult.success mid (iter + 1)
-        else if oppositeSigns (f left) fmid then
+        if (BisectionConfig.isPositive fleft && BisectionConfig.isNegative fmid) ||
+            (BisectionConfig.isNegative fleft && BisectionConfig.isPositive fmid) then
           loop left mid (iter + 1)
         else
           loop mid right (iter + 1)
+      termination_by maxIter - iter
     loop a b 0
-
--- wrapper (opt)
-def findRoot (f : Float → Float) (a b : Float) : BisectionResult :=
-  bisection f a b
-
--- display
-instance : Repr BisectionResult where
-  reprPrec r _ := match r with
-    | .success root iter => s!"Root: {root} ({iter} iterations)"
-    | .invalidBounds reason => s!"Invalid: {reason}"
-    | .maxIterationsReached approx iter => s!"Max iterations: {approx} ({iter} iterations)"
-
--- tests
-def testFunction1 (x : Float) : Float := x * x - 2.0
-def testFunction2 (x : Float) : Float := x * x * x - x - 1.0
-def testFunction3 (x : Float) : Float := Float.sin x
-
-#eval! findRoot testFunction1 1.0 2.0  -- √2
-#eval! findRoot testFunction2 1.0 2.0  -- x³ - x - 1 = 0
-#eval! findRoot testFunction3 3.0 4.0  -- π 
