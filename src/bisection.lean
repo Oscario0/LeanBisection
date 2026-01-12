@@ -1,11 +1,5 @@
 import Mathlib
 
-structure Molecule where
-  name     : Option String
-  formula  : String
-  typeOfAtoms : List (Chemprop)
-  numOfAtoms : List (Float)
-
 class BisectionConfig (α : Type*) where
   add : α → α → α
   sub : α → α → α
