@@ -18,8 +18,9 @@ The complete implementation using float arithmetic: `src/bisection.lean`
 ### Core Components
 
 The implementation includes:
+
 - `BisectionResult` - Result type with success/error cases
-- `BisectionConfig` - Configuration for tolerance and iteration limits  
+- `BisectionConfig` - Configuration for tolerance and iteration limits
 - `bisection` - Main loop
 - `findRoot` - Convenient wrapper function
 - Built-in test functions, examples and so on
@@ -44,7 +45,7 @@ The file contains ready-to-run examples:
 ```lean4
 -- Built-in test functions
 def testFunction1 (x : Float) : Float := x * x - 2.0        -- √2
-def testFunction2 (x : Float) : Float := x * x * x - x - 1.0 -- cubic  
+def testFunction2 (x : Float) : Float := x * x * x - x - 1.0 -- cubic
 def testFunction3 (x : Float) : Float := Float.sin x        -- π
 
 -- Execute with #eval!
@@ -59,7 +60,7 @@ def testFunction3 (x : Float) : Float := Float.sin x        -- π
 -- Define your own function
 def myFunction (x : Float) : Float := x * x - 5.0
 
--- Find the root  
+-- Find the root
 #eval! findRoot myFunction 2.0 3.0  -- Finds √5 ≈ 2.236
 
 -- With custom configuration
@@ -75,9 +76,53 @@ The bisection method finds roots by:
 2. **Iterate**: Repeatedly bisect the interval `[a,b]` at the midpoint
 3. **Converge**: Stop when the interval is smaller than tolerance or function value is near and/or equal zero
 
+## Chemistry Applications
+
+The bisection method is particularly useful for solving equations of state in chemical engineering. See `src/chemistry_examples.lean` for examples.
+
+### Compressibility Factor (Z)
+
+The compressibility factor Z relates real gas behavior to ideal gas behavior via: **PV = ZnRT**
+
+#### Van der Waals Equation
+
+For the van der Waals equation of state, Z satisfies: **Z³ - (1 + B)Z² + AZ - AB = 0**
+
+where A = aP/(RT)² and B = bP/(RT)
+
+```lean4
+-- Van der Waals equation solver
+def vanDerWaalsEquation (A B : Float) (Z : Float) : Float :=
+  Z * Z * Z - (1.0 + B) * Z * Z + A * Z - A * B
+
+-- Example: Calculate Z for nitrogen at reduced conditions
+def nitrogenExample : Option Float :=
+  let A := 0.42  -- Reduced parameter aP/(RT)²
+  let B := 0.08  -- Reduced parameter bP/(RT)
+  let equation := vanDerWaalsEquation A B
+  bisectionCore equation 0.1 2.0 0.0001 100
+
+#eval nitrogenExample  -- Returns compressibility factor
+```
+
+#### Redlich-Kwong Equation
+
+For the Redlich-Kwong equation: **Z³ - Z² + (A - B - B²)Z - AB = 0**
+
+```lean4
+def redlichKwongEquation (A B : Float) (Z : Float) : Float :=
+  Z * Z * Z - Z * Z + (A - B - B * B) * Z - A * B
+
+def redlichKwongExample : Option Float :=
+  let A := 0.5
+  let B := 0.08
+  let equation := redlichKwongEquation A B
+  bisectionCore equation 0.1 2.0 0.0001 100
+```
+
 ## Goals
 
-This implementation aims at performing practical and complex numerical computations in Lean and ensure results formally verified without a "human-in-the-loop" 
+This implementation aims at performing practical and complex numerical computations in Lean and ensure results formally verified without a "human-in-the-loop"
 
 ## Future Work
 
@@ -89,4 +134,3 @@ This implementation aims at performing practical and complex numerical computati
 
 - **Lean 4**: Any recent version (tested with v4.25.0-rc2)
 - **Lake**: For package management
-
