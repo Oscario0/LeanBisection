@@ -31,3 +31,5 @@ __pycache__/
 *.log
 requirements.txt
 key.py
+formal gallery/BisectionHalving.lean
+formal gallery/BisectionTermination.lean
