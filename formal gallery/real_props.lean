@@ -175,8 +175,6 @@ lemma bisectionCore_eq_aux (f : ℝ → ℝ) (a b tol : ℝ) (maxIter : ℕ) (h 
   · linarith;
   · split_ifs <;> [ exact ih _ ( by omega ) _ _ _ rfl; exact ih _ ( by omega ) _ _ _ rfl ]
 
-end AristotleLemmas
-
 theorem bisection_termination_bounded_real
     (f : ℝ → ℝ) (a b tolerance : ℝ) (maxIter : ℕ)
     (h_order : a < b)
@@ -191,3 +189,5 @@ by
   obtain ⟨x, hx₁, hx₂⟩ : ∃ x, bisectionAux f tolerance maxIter a b 0 = some x ∧ a ≤ x ∧ x ≤ b := by
     exact bisectionAux_bounds f tolerance maxIter 0 a b ( le_of_lt h_order );
   exact ⟨ x, hx₁, hx₂.1, hx₂.2, 0, Nat.zero_le _, abs_le.mpr ⟨ by norm_num; linarith, by norm_num; linarith ⟩ ⟩
+
+end AristotleLemmas
