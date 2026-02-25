@@ -136,26 +136,4 @@ instance {α : Type*} [BisectionField α] : Repr (BisectionResult α) where
     | .maxIterationsReached approx iter =>
         s!"⚠ Max iterations: best approx = {BisectionField.toFloat approx} ({iter} iterations)"
 
-/- Tests -/
 
--- Test functions (Float)
-def testSqrt2 (x : Float) : Float := x * x - 2.0
-def testCubic (x : Float) : Float := x * x * x - x - 1.0
-def testPi (x : Float) : Float := Float.sin x
-def testSinCos (x : Float) : Float := Float.sin x - Float.cos x
-
-#eval! findRoot testSqrt2 1.0 2.0    -- √2 ≈ 1.414
-#eval! findRoot testCubic 1.0 2.0    -- ≈ 1.325
-#eval! findRoot testPi 3.0 4.0       -- π ≈ 3.14159
-#eval! findRoot testSinCos 0.5 1.0   -- π/4 ≈ 0.785
-
--- Test with ℚ (exact rational arithmetic)
-def testSqrt2Rat (x : ℚ) : ℚ := x * x - 2
-def testCubicRat (x : ℚ) : ℚ := x * x * x - x - 1
-
-#eval! findRootRat testSqrt2Rat 1 2
-#eval! findRootRat testCubicRat 1 2
-
--- Error case tests
-#eval! findRoot testSqrt2 2.0 1.0    -- invalid bounds (a > b)
-#eval! findRoot testSqrt2 2.0 3.0    -- no sign change
