@@ -27,25 +27,7 @@ The following was proved by Aristotle:
 import Mathlib
 import bisection
 
-def bisectionCore {α : Type*} [BisectionConfig α]
-    (f : α → α) (a b tolerance : α) (maxIter : ℕ) : Option α :=
-  if BisectionConfig.le b a then none  -- a >= b
-  else
-    let rec loop (left right : α) (iter : ℕ) : Option α :=
-      if iter >= maxIter then
-        some ((left + right) / BisectionConfig.two)
-      else if BisectionConfig.lt (right - left) tolerance then
-        some ((left + right) / BisectionConfig.two)
-      else
-        let mid := (left + right) / BisectionConfig.two
-        let fleft := f left
-        let fmid := f mid
-        if (BisectionConfig.isPositive fleft && BisectionConfig.isNegative fmid) ||
-            (BisectionConfig.isNegative fleft && BisectionConfig.isPositive fmid) then
-          loop left mid (iter + 1)
-        else
-          loop mid right (iter + 1)
-    loop a b 0
+noncomputable section AristotleLemmas
 
 -- Theorem 1: Interval Halving Property for Real Functions
 theorem bisection_interval_halving_real
