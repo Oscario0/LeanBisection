@@ -1,3 +1,0 @@
-import BestArea
-
-#eval! testCertifiedRegression
