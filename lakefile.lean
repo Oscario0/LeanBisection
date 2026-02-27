@@ -10,4 +10,4 @@ require mathlib from git
 @[default_target]
 lean_lib «Bisection» where
   srcDir := "src"
-  roots := #[`bi_test, `bi_test_proofs, `bisection]
+  roots := #[`bisection, `bisection_tests, `real_props]

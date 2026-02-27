@@ -7,11 +7,12 @@ inductive BisectionResult (α : Type*) where
   | noSignChange (reason : String)
   | maxIterationsReached (bestApprox : α) (iterations : Nat)
 
-/- ===== Typeclass ===== -/
+
 
 /-- type u to floats -/
 class BisectionField (α : Type*) where
   zero : α
+  one : α
   two : α
   add : α → α → α
   sub : α → α → α
@@ -32,12 +33,22 @@ def oppositeSigns (x y : α) : Bool :=
 
 instance : Inhabited α where default := BisectionField.zero
 
+-- Operator instances for natural syntax
+instance : Add α where add := BisectionField.add
+instance : Sub α where sub := BisectionField.sub
+instance : Mul α where mul := BisectionField.mul
+instance : Div α where div := BisectionField.div
+instance : OfNat α 0 where ofNat := BisectionField.zero
+instance : OfNat α 1 where ofNat := BisectionField.one
+instance : OfNat α 2 where ofNat := BisectionField.two
+
 end BisectionField
 
 /- ===== Instances ===== -/
 
 instance : BisectionField Float where
   zero := 0.0
+  one := 1.0
   two := 2.0
   add := (· + ·)
   sub := (· - ·)
@@ -52,6 +63,7 @@ instance : BisectionField Float where
 
 instance : BisectionField ℚ where
   zero := 0
+  one := 1
   two := 2
   add := (· + ·)
   sub := (· - ·)
@@ -66,6 +78,7 @@ instance : BisectionField ℚ where
 
 noncomputable instance : BisectionField ℝ where
   zero := 0
+  one := 1
   two := 2
   add := (· + ·)
   sub := (· - ·)
@@ -90,7 +103,7 @@ def defaultParamsRat : BisectionParams ℚ :=
   { tolerance := 1 / 10^10, maxIterations := 1000 }
 
 /-core-/
-def bisection {α : Type*} [BisectionField α]
+def bisectionCore {α : Type*} [BisectionField α]
     (f : α → α) (a b : α) (params : BisectionParams α) : BisectionResult α :=
   if BisectionField.le b a then
     BisectionResult.invalidBounds "left bound must be less than right bound"
@@ -118,12 +131,11 @@ def bisection {α : Type*} [BisectionField α]
 
 /--  wrapper for floats with default params -/
 def findRoot (f : Float → Float) (a b : Float) : BisectionResult Float :=
-  bisection f a b defaultParamsFloat
+  bisectionCore f a b defaultParamsFloat
 
 /-- wrapper for rats with default params -/
 def findRootRat (f : ℚ → ℚ) (a b : ℚ) : BisectionResult ℚ :=
-  bisection f a b defaultParamsRat
-
+  bisectionCore f a b defaultParamsRat
 
 instance {α : Type*} [BisectionField α] : Repr (BisectionResult α) where
   reprPrec r _ := match r with
@@ -135,5 +147,3 @@ instance {α : Type*} [BisectionField α] : Repr (BisectionResult α) where
         s!"✗ No sign change: {reason}"
     | .maxIterationsReached approx iter =>
         s!"⚠ Max iterations: best approx = {BisectionField.toFloat approx} ({iter} iterations)"
-
-
