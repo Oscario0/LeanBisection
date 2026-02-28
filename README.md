@@ -66,6 +66,20 @@ def highPrecParams : BisectionParams Float := { tolerance := 1e-15, maxIteration
 #eval! bisection testSqrt2 1.0 2.0 highPrecParams  -- ✓ Root: 1.414214 (50 iterations)
 ```
 
+#### Float Limitations
+
+Bisection can still "succeed" in cases where no true root exists due to floating-point behavior:
+
+```lean4
+-- Pole crossing: 1/x on [-1, 1] has no root, but bisection finds x ≈ 0
+def testPoleCross (x : Float) : Float := 1.0 / x
+#eval! findRoot testPoleCross (-1.0) 1.0  -- ✓ Root: -0.000000 (no real root)
+
+-- High powers: (x-1)^11 has root at x=1, but Float precision degrades
+def testPower (x : Float) : Float := (x - 1)^11
+#eval! findRoot testPower 0.9 1.5  -- not going to find exactly 1.0
+```
+
 ### Rational (ℚ) Examples
 
 ```lean4
