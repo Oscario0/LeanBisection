@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Test Hybrid Gate Backend",
+			"type": "shell",
+			"command": "lake",
+			"args": [
+				"env",
+				"lean",
+				"src/hybrid_gate_tests.lean"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}

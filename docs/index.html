@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hybrid Gate Pipeline</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="atmo"></div>
+
+    <header class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">LeanBisection / Hybrid Gate Backend</p>
+        <h1>Backend -> Cert Export -> Root Finding</h1>
+        <p class="subtitle">
+          A frontend pipeline that mirrors the Lean backend flow: validate continuity,
+          export a proof-style certificate, and execute bisection on the approved interval.
+        </p>
+      </div>
+      <div class="hero-badge">
+        <div class="badge-label">Pipeline Status</div>
+        <div id="pipeline-status" class="badge">Idle</div>
+        <div class="badge-note">Frontend-only simulation</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel input-panel">
+        <div class="panel-header">
+          <h2>Input: Polynomial Problem</h2>
+          <p>Coefficients are ordered from constant term upward.</p>
+        </div>
+        <form id="pipeline-form">
+          <label class="field">
+            <span>Polynomial coefficients</span>
+            <input id="coeffs" type="text" placeholder="-2, 0, 1">
+            <small>Example: -2, 0, 1 means f(x) = -2 + x^2</small>
+          </label>
+
+          <div class="row">
+            <label class="field">
+              <span>Left bound</span>
+              <input id="left" type="number" step="any" placeholder="1">
+            </label>
+            <label class="field">
+              <span>Right bound</span>
+              <input id="right" type="number" step="any" placeholder="2">
+            </label>
+          </div>
+
+          <div class="divider">Backend continuity gate</div>
+          <div class="row">
+            <label class="field">
+              <span>Samples</span>
+              <input id="samples" type="number" min="1" step="1" value="200">
+            </label>
+            <label class="field">
+              <span>Max jump</span>
+              <input id="maxJump" type="number" step="any" value="1000000">
+            </label>
+          </div>
+          <label class="field">
+            <span>Max abs value</span>
+            <input id="maxAbs" type="number" step="any" value="1000000000000">
+          </label>
+
+          <div class="divider">Bisection parameters</div>
+          <div class="row">
+            <label class="field">
+              <span>Tolerance</span>
+              <input id="tolerance" type="number" step="any" value="1e-10">
+            </label>
+            <label class="field">
+              <span>Max iterations</span>
+              <input id="maxIter" type="number" step="1" value="1000">
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="button" id="load-example" class="ghost">Load sqrt(2) example</button>
+            <button type="reset" id="reset" class="ghost">Reset</button>
+            <button type="submit" id="run" class="primary">Run pipeline</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel pipeline-panel">
+        <div class="panel-header">
+          <h2>Pipeline Stages</h2>
+          <p>Each stage mirrors the backend checks and certificate flow.</p>
+        </div>
+
+        <div class="steps">
+          <div class="step" id="step-backend" data-status="idle">
+            <div class="step-title">1. Backend continuity gate</div>
+            <div class="step-status">Idle</div>
+            <div class="step-note">Samples the interval and rejects NaN/Inf, large jumps, and blowups.</div>
+          </div>
+          <div class="step" id="step-cert" data-status="idle">
+            <div class="step-title">2. Certificate export</div>
+            <div class="step-status">Idle</div>
+            <div class="step-note">Emits a proof-style summary of checks and sampling budget.</div>
+          </div>
+          <div class="step" id="step-root" data-status="idle">
+            <div class="step-title">3. Root finding</div>
+            <div class="step-status">Idle</div>
+            <div class="step-note">Runs bisection only if the certificate is accepted.</div>
+          </div>
+        </div>
+
+        <div class="panel-header log-header">
+          <h3>Execution log</h3>
+          <p>Notes are appended as the pipeline runs.</p>
+        </div>
+        <ul id="log" class="log"></ul>
+      </section>
+    </main>
+
+    <section class="panel result-panel">
+      <div class="panel-header">
+        <h2>Results</h2>
+        <p>Outputs are summaries of the simulated backend decisions.</p>
+      </div>
+
+      <div class="result-grid">
+        <div class="result-card" id="result-overview">
+          <h3>Overview</h3>
+          <p class="muted">Run the pipeline to populate results.</p>
+        </div>
+        <div class="result-card" id="result-cert">
+          <h3>Certificate</h3>
+          <p class="muted">Pending</p>
+        </div>
+        <div class="result-card" id="result-root">
+          <h3>Root finding</h3>
+          <p class="muted">Pending</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>
+        This UI mirrors the backend shape but does not call Lean yet. It is safe to
+        use as a front door for future API or WASM-backed execution.
+      </p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

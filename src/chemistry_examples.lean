@@ -1,63 +1,112 @@
 import bisection
+import ChemistryProofs
 
+open scoped RealLike
+open Bisection
 
--- The compressibility factor Z satisfies: PV = ZnRT
--- For van der Waals equation: (P + a/V²)(V - b) = RT
--- Rearranging for Z: Z³ - (1 + B)Z² + AZ - AB = 0
--- where A = aP/(RT)², B = bP/(RT)
 namespace CompressibilityFactor
 
--- Van der Waals equation solver
--- We solve: Z³ - (1 + B)Z² + AZ - AB = 0
-def vanDerWaalsEquation (A B : Float) (Z : Float) : Float :=
-  Z * Z * Z - (1.0 + B) * Z * Z + A * Z - A * B
+/-- Execute a Van der Waals problem over `Float` using its stored interval. -/
+def runVanDerWaals (params : VanDerWaalsParams Float) (interval : RootInterval Float) :
+    BisectionResult Float :=
+  Bisection.bisectionCore (vanDerWaalsEquation params) interval.left interval.right
+    { tolerance := 0.0001, maxIterations := 100 }
 
--- Example 1: Calculate Z for nitrogen at reduced conditions
--- Using reduced van der Waals parameters
-def nitrogenExample : Option Float :=
-  let A := 0.42  -- Reduced parameter aP/(RT)²
-  let B := 0.08  -- Reduced parameter bP/(RT)
-  let equation := vanDerWaalsEquation A B
-  bisectionCore equation 0.1 2.0 0.0001 100
+/-- Certified executable Van der Waals run from matched real and Float parameter bundles. -/
+def certifiedRunVanDerWaals
+    (paramsR : VanDerWaalsParams ℝ)
+    (intervalR : RootInterval ℝ)
+    (paramsF : VanDerWaalsParams Float)
+    (intervalF : RootInterval Float)
+    (_cert : Bisection.Certificate
+      { f := vanDerWaalsEquation paramsR, left := intervalR.left, right := intervalR.right }) :
+    Except String (BisectionResult Float) :=
+  Bisection.bisectionCertifiedOfFunctions?
+    (vanDerWaalsEquation paramsR)
+    intervalR.left
+    intervalR.right
+    (vanDerWaalsEquation paramsF)
+    intervalF.left
+    intervalF.right
+    _cert
+    { tolerance := 0.0001, maxIterations := 100 }
 
--- Example 2: Ideal gas
-def idealGasExample : Option Float :=
-  let equation (Z : Float) := Z - 1.0
-  bisectionCore equation 0.5 1.5 0.0001 100
+def nitrogenExample : BisectionResult Float :=
+  runVanDerWaals (nitrogenParams (α := Float)) (nitrogenInterval (α := Float))
 
--- Example 3: High pressure gas
-def highPressureExample : Option Float :=
-  let A := 0.2
-  let B := 0.15
-  let equation := vanDerWaalsEquation A B
-  bisectionCore equation 1.0 2.0 0.0001 100
+def certifiedNitrogenExample : Except String (BisectionResult Float) :=
+  certifiedRunVanDerWaals
+    nitrogenParamsR
+    nitrogenIntervalR
+    (nitrogenParams (α := Float))
+    (nitrogenInterval (α := Float))
+    CompressibilityFactor.nitrogenCertificate
 
--- Example 4: Low temperature gas
-def lowTempExample : Option Float :=
-  let A := 1.5
-  let B := 0.05
-  let equation := vanDerWaalsEquation A B
-  bisectionCore equation 0.1 1.0 0.0001 100
+def co2Example : BisectionResult Float :=
+  runVanDerWaals (co2Params (α := Float)) (co2Interval (α := Float))
 
--- Redlich-Kwong equation: Z³ - Z² + (A - B - B²)Z - AB = 0
--- where A = aP/(R²T^2.5), B = bP/(RT)
-def redlichKwongEquation (A B : Float) (Z : Float) : Float :=
-  Z * Z * Z - Z * Z + (A - B - B * B) * Z - A * B
+def certifiedCo2Example : Except String (BisectionResult Float) :=
+  certifiedRunVanDerWaals
+    co2ParamsR
+    co2IntervalR
+    (co2Params (α := Float))
+    (co2Interval (α := Float))
+    CompressibilityFactor.co2Certificate
 
-def redlichKwongExample : Option Float :=
-  let A := 0.5
-  let B := 0.08
-  let equation := redlichKwongEquation A B
-  bisectionCore equation 0.1 2.0 0.0001 100
+/-- Execute a Redlich-Kwong problem over `Float` using its stored interval. -/
+def runRedlichKwong (params : RedlichKwongParams Float) (interval : RootInterval Float) :
+    BisectionResult Float :=
+  Bisection.bisectionCore (redlichKwongEquation params) interval.left interval.right
+    { tolerance := 0.0001, maxIterations := 100 }
 
-def verifyCompressibility (equation : Float → Float) (Z : Float) : Float :=
-  equation Z
+/-- Certified executable Redlich-Kwong run from matched real and Float parameter bundles. -/
+def certifiedRunRedlichKwong
+    (paramsR : RedlichKwongParams ℝ)
+    (intervalR : RootInterval ℝ)
+    (paramsF : RedlichKwongParams Float)
+    (intervalF : RootInterval Float)
+    (_cert : Bisection.Certificate
+      { f := redlichKwongEquation paramsR, left := intervalR.left, right := intervalR.right }) :
+    Except String (BisectionResult Float) :=
+  Bisection.bisectionCertifiedOfFunctions?
+    (redlichKwongEquation paramsR)
+    intervalR.left
+    intervalR.right
+    (redlichKwongEquation paramsF)
+    intervalF.left
+    intervalF.right
+    _cert
+    { tolerance := 0.0001, maxIterations := 100 }
 
--- Test all examples
+def nitrogenRKExample : BisectionResult Float :=
+  runRedlichKwong (nitrogenRKParams (α := Float)) (nitrogenInterval (α := Float))
+
+def certifiedNitrogenRKExample : Except String (BisectionResult Float) :=
+  certifiedRunRedlichKwong
+    nitrogenRKParamsR
+    nitrogenRKIntervalR
+    (nitrogenRKParams (α := Float))
+    (nitrogenInterval (α := Float))
+    CompressibilityFactor.nitrogenRKCertificate
+
+def co2RKExample : BisectionResult Float :=
+  runRedlichKwong (co2RKParams (α := Float)) (co2Interval (α := Float))
+
+def certifiedCo2RKExample : Except String (BisectionResult Float) :=
+  certifiedRunRedlichKwong
+    co2RKParamsR
+    co2RKIntervalR
+    (co2RKParams (α := Float))
+    (co2Interval (α := Float))
+    CompressibilityFactor.co2RKCertificate
+
 #eval nitrogenExample
-#eval idealGasExample
-#eval highPressureExample
-#eval lowTempExample
-#eval redlichKwongExample
+#eval certifiedNitrogenExample
+#eval co2Example
+#eval certifiedCo2Example
+#eval nitrogenRKExample
+#eval certifiedNitrogenRKExample
+#eval co2RKExample
+#eval certifiedCo2RKExample
 
 end CompressibilityFactor
