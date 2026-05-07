@@ -11,17 +11,23 @@ const resultCert = document.querySelector("#result-cert");
 const resultRoot = document.querySelector("#result-root");
 
 const exampleButton = document.querySelector("#load-example");
+const exampleFunctionButton = document.querySelector("#load-example-fn");
 const resetButton = document.querySelector("#reset");
 
+const problemTypeRadios = document.querySelectorAll("input[name='problemType']");
+const polynomialBlock = document.querySelector("#input-polynomial");
+const expressionBlock = document.querySelector("#input-expression");
+
 const fields = {
-  coeffs: document.querySelector("#coeffs"),
-  left: document.querySelector("#left"),
-  right: document.querySelector("#right"),
-  samples: document.querySelector("#samples"),
-  maxJump: document.querySelector("#maxJump"),
-  maxAbs: document.querySelector("#maxAbs"),
-  tolerance: document.querySelector("#tolerance"),
-  maxIter: document.querySelector("#maxIter"),
+    coeffs: document.querySelector("#coeffs"),
+  expression: document.querySelector("#expression"),
+    left: document.querySelector("#left"),
+    right: document.querySelector("#right"),
+    samples: document.querySelector("#samples"),
+    maxJump: document.querySelector("#maxJump"),
+    maxAbs: document.querySelector("#maxAbs"),
+    tolerance: document.querySelector("#tolerance"),
+    maxIter: document.querySelector("#maxIter"),
 };
 
 function setStatusBadge(text) {
@@ -43,6 +49,93 @@ function addLog(message) {
 
 function clearLog() {
   logList.innerHTML = "";
+}
+
+function getProblemType() {
+  const selected = document.querySelector("input[name='problemType']:checked");
+  return selected ? selected.value : "polynomial";
+}
+
+function updateProblemTypeUI(type) {
+  if (type === "expression") {
+    expressionBlock.classList.remove("hidden");
+    polynomialBlock.classList.add("hidden");
+  } else {
+    polynomialBlock.classList.remove("hidden");
+    expressionBlock.classList.add("hidden");
+  }
+}
+
+function setProblemType(type) {
+  problemTypeRadios.forEach((radio) => {
+    radio.checked = radio.value === type;
+  });
+  updateProblemTypeUI(type);
+}
+
+const allowedFunctions = new Set([
+  "sin",
+  "cos",
+  "tan",
+  "asin",
+  "acos",
+  "atan",
+  "exp",
+  "log",
+  "sqrt",
+  "abs",
+  "pow",
+  "min",
+  "max",
+  "floor",
+  "ceil",
+]);
+
+function compileExpression(raw) {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return { ok: false, reason: "No expression provided" };
+  }
+  if (/[^0-9x+\-*/^().,\sA-Za-z]/.test(trimmed)) {
+    return { ok: false, reason: "Expression contains unsupported characters" };
+  }
+  if (/(?:constructor|__proto__|window|document|Function|eval|=>|;)/i.test(trimmed)) {
+    return { ok: false, reason: "Expression contains unsafe tokens" };
+  }
+
+  let invalid = false;
+  let expr = trimmed.replace(/\^/g, "**");
+  expr = expr.replace(/\b([A-Za-z_][A-Za-z0-9_]*)\b/g, (match) => {
+    const lower = match.toLowerCase();
+    if (lower === "x") {
+      return "x";
+    }
+    if (lower === "pi") {
+      return "Math.PI";
+    }
+    if (lower === "e") {
+      return "Math.E";
+    }
+    if (lower === "ln") {
+      return "Math.log";
+    }
+    if (allowedFunctions.has(lower)) {
+      return `Math.${lower}`;
+    }
+    invalid = true;
+    return match;
+  });
+
+  if (invalid) {
+    return { ok: false, reason: "Unknown identifier in expression" };
+  }
+
+  try {
+    const fn = new Function("x", `return ${expr};`);
+    return { ok: true, fn, normalized: expr };
+  } catch (error) {
+    return { ok: false, reason: "Expression could not be parsed" };
+  }
 }
 
 function parseCoefficients(raw) {
@@ -75,7 +168,7 @@ function evaluatePoly(coeffs, x) {
   return acc;
 }
 
-function checkContinuityGate({ coeffs, left, right, samples, maxJump, maxAbs }) {
+function checkContinuityGate({ fn, left, right, samples, maxJump, maxAbs }) {
   if (!(right > left)) {
     return { ok: false, reason: "Left bound must be less than right bound" };
   }
@@ -88,7 +181,12 @@ function checkContinuityGate({ coeffs, left, right, samples, maxJump, maxAbs }) 
 
   for (let i = 0; i <= samples; i += 1) {
     const x = left + step * i;
-    const y = evaluatePoly(coeffs, x);
+    let y;
+    try {
+      y = fn(x);
+    } catch (error) {
+      return { ok: false, reason: "Evaluation failed inside continuity gate" };
+    }
 
     if (!Number.isFinite(y)) {
       return { ok: false, reason: "Non-finite value detected" };
@@ -113,11 +211,18 @@ function exportCertificate({ samples }) {
   };
 }
 
-function bisection({ coeffs, left, right, tolerance, maxIter }) {
+function bisection({ fn, left, right, tolerance, maxIter }) {
   let a = left;
   let b = right;
-  let fa = evaluatePoly(coeffs, a);
-  let fb = evaluatePoly(coeffs, b);
+  let fa;
+  let fb;
+
+  try {
+    fa = fn(a);
+    fb = fn(b);
+  } catch (error) {
+    return { ok: false, reason: "Evaluation failed at bounds" };
+  }
 
   if (!Number.isFinite(fa) || !Number.isFinite(fb)) {
     return { ok: false, reason: "Non-finite boundary value" };
@@ -137,7 +242,11 @@ function bisection({ coeffs, left, right, tolerance, maxIter }) {
 
   for (let i = 0; i < maxIter; i += 1) {
     mid = (a + b) / 2;
-    fm = evaluatePoly(coeffs, mid);
+    try {
+      fm = fn(mid);
+    } catch (error) {
+      return { ok: false, reason: "Evaluation failed at midpoint" };
+    }
 
     if (!Number.isFinite(fm)) {
       return { ok: false, reason: "Non-finite mid value" };
@@ -163,12 +272,33 @@ function bisection({ coeffs, left, right, tolerance, maxIter }) {
   };
 }
 
-function setOverview({ coeffs, left, right }) {
+function escapeHtml(value) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function setOverview({ problemType, coeffs, expression, left, right }) {
+  let detail = "";
+  let note = "";
+
+  if (problemType === "expression") {
+    const safeExpr = escapeHtml(expression);
+    detail = `<p>Expression: ${safeExpr}</p>`;
+    note = "Execution mirrors safeFindRootHybridRLDefault.";
+  } else {
+    detail = `<p>Polynomial degree: ${Math.max(coeffs.length - 1, 0)}</p>`;
+    note = "Execution mirrors safeFindPolynomialRootHybridRLDefault.";
+  }
+
   resultOverview.innerHTML = `
     <h3>Overview</h3>
-    <p>Polynomial degree: ${Math.max(coeffs.length - 1, 0)}</p>
+    ${detail}
     <p>Interval: [${left}, ${right}]</p>
-    <p class="muted">Execution mirrors safeFindPolynomialRootHybridRLDefault.</p>
+    <p class="muted">${note}</p>
   `;
 }
 
@@ -220,9 +350,25 @@ function resetPipelineUI() {
 }
 
 function collectInputs() {
-  const coeffsParsed = parseCoefficients(fields.coeffs.value);
-  if (!coeffsParsed.ok) {
-    return coeffsParsed;
+  const problemType = getProblemType();
+  let coeffs = null;
+  let expression = "";
+  let fn;
+
+  if (problemType === "expression") {
+    const compiled = compileExpression(fields.expression.value);
+    if (!compiled.ok) {
+      return compiled;
+    }
+    expression = fields.expression.value.trim();
+    fn = compiled.fn;
+  } else {
+    const coeffsParsed = parseCoefficients(fields.coeffs.value);
+    if (!coeffsParsed.ok) {
+      return coeffsParsed;
+    }
+    coeffs = coeffsParsed.coeffs;
+    fn = (x) => evaluatePoly(coeffs, x);
   }
 
   const left = Number(fields.left.value);
@@ -240,7 +386,10 @@ function collectInputs() {
 
   return {
     ok: true,
-    coeffs: coeffsParsed.coeffs,
+    problemType,
+    coeffs,
+    expression,
+    fn,
     left,
     right,
     samples,
@@ -306,7 +455,9 @@ function runPipeline(event) {
 }
 
 exampleButton.addEventListener("click", () => {
+  setProblemType("polynomial");
   fields.coeffs.value = "-2, 0, 1";
+  fields.expression.value = "";
   fields.left.value = "1";
   fields.right.value = "2";
   fields.samples.value = "200";
@@ -317,10 +468,34 @@ exampleButton.addEventListener("click", () => {
   addLog("Loaded sqrt(2) example");
 });
 
+exampleFunctionButton.addEventListener("click", () => {
+  setProblemType("expression");
+  fields.expression.value = "sin(x) - 0.5";
+  fields.coeffs.value = "";
+  fields.left.value = "0";
+  fields.right.value = "2";
+  fields.samples.value = "200";
+  fields.maxJump.value = "1000000";
+  fields.maxAbs.value = "1000000000000";
+  fields.tolerance.value = "1e-10";
+  fields.maxIter.value = "1000";
+  addLog("Loaded sin(x) example");
+});
+
 resetButton.addEventListener("click", () => {
-  resetPipelineUI();
+  setTimeout(() => {
+    updateProblemTypeUI(getProblemType());
+    resetPipelineUI();
+  }, 0);
+});
+
+problemTypeRadios.forEach((radio) => {
+  radio.addEventListener("change", () => {
+    updateProblemTypeUI(getProblemType());
+  });
 });
 
 form.addEventListener("submit", runPipeline);
 
+updateProblemTypeUI(getProblemType());
 resetPipelineUI();

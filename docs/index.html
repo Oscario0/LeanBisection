@@ -34,15 +34,36 @@
     <main class="layout">
       <section class="panel input-panel">
         <div class="panel-header">
-          <h2>Input: Polynomial Problem</h2>
-          <p>Coefficients are ordered from constant term upward.</p>
+          <h2>Input: Function Problem</h2>
+          <p>Choose polynomial coefficients or a direct function expression.</p>
         </div>
         <form id="pipeline-form">
-          <label class="field">
-            <span>Polynomial coefficients</span>
-            <input id="coeffs" type="text" placeholder="-2, 0, 1">
-            <small>Example: -2, 0, 1 means f(x) = -2 + x^2</small>
-          </label>
+          <div class="mode-toggle" role="group" aria-label="Problem type">
+            <label class="toggle">
+              <input type="radio" name="problemType" value="polynomial" checked>
+              <span>Polynomial</span>
+            </label>
+            <label class="toggle">
+              <input type="radio" name="problemType" value="expression">
+              <span>Function expression</span>
+            </label>
+          </div>
+
+          <div id="input-polynomial" class="input-block">
+            <label class="field">
+              <span>Polynomial coefficients</span>
+              <input id="coeffs" type="text" placeholder="-2, 0, 1">
+              <small>Example: -2, 0, 1 means f(x) = -2 + x^2</small>
+            </label>
+          </div>
+
+          <div id="input-expression" class="input-block hidden">
+            <label class="field">
+              <span>Function expression</span>
+              <input id="expression" type="text" placeholder="sin(x) - 0.5">
+              <small>Use x, + - * / ^, and functions like sin, cos, tan, exp, log, sqrt, abs, pow, pi, e.</small>
+            </label>
+          </div>
 
           <div class="row">
             <label class="field">
@@ -84,7 +105,8 @@
           </div>
 
           <div class="actions">
-            <button type="button" id="load-example" class="ghost">Load sqrt(2) example</button>
+            <button type="button" id="load-example" class="ghost">Load sqrt(2) polynomial</button>
+            <button type="button" id="load-example-fn" class="ghost">Load sin(x) example</button>
             <button type="reset" id="reset" class="ghost">Reset</button>
             <button type="submit" id="run" class="primary">Run pipeline</button>
           </div>

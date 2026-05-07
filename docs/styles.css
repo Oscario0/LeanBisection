@@ -136,6 +136,45 @@ body {
   color: var(--ink-soft);
 }
 
+.mode-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--outline);
+  background: #fffaf4;
+  font-size: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggle span {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.toggle input:checked + span {
+  color: var(--accent-dark);
+}
+
+.input-block.hidden {
+  display: none;
+}
+
 .field {
   display: flex;
   flex-direction: column;
